@@ -1,7 +1,7 @@
 Для получения расчёта отпускных без учёта праздников :
-    localhost:8080/calculacte/{среднегодовая зп}/{кол-во дней отпуска}
+    localhost:8080/calculate?salary={значение}&vacationDays={значение}
 С учётом праздничных дней :
-    localhost:8080/accurateCalculacte/{среднегодовая зп}/{кол-во дней отпуска}?dayOfLeaving={значение}&monthOfLeaving={значение}
+    localhost:8080/accurateCalculate?salary={Значение}&vacationDays={значение}&dayOfLeaving={значение}&monthOfLeaving={значение}
 
 <<<
     Для расчёта с учётом использовал субд PostgreSQL, создал одну таблицу с информацией о месяцах, а именно:

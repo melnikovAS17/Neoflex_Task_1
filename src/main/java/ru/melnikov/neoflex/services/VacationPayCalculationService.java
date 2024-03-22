@@ -23,15 +23,17 @@ public class VacationPayCalculationService {
 
     // 22 - взял, как среднее количество дней в месяце
     private static final int AVERAGE_DAYS_IN_MONTH = 22;
-
+    // NDFL - подоходний налог
     private static final float NDFL = 0.13f;
 
-    public int getVacationPayAmount(int avgSalary, int amountVacationDays){
+    // Метод расчёта отпускных без учёта праздников
+    public int getVacationPayAmount(int avgSalary, int amountVacationDays) {
+
         int tax = (int) (((avgSalary/AVERAGE_DAYS_IN_MONTH)*amountVacationDays) * NDFL);
         return ((avgSalary/AVERAGE_DAYS_IN_MONTH)*amountVacationDays) - tax;
     }
 
-    // TODO подправить комменты
+    // Метод расчёта с учётом праздников
     public int getVacationPayAmountIncludingHolidays(int avgSalary, int amountVacationDays, int dayOfLeaving,
                                                      int monthOfLeaving){
         int notTakenIntoAccountDays = 0;
@@ -40,20 +42,20 @@ public class VacationPayCalculationService {
         // день ухода в отпуск
         int daysUntilEndMonth = currentMonth.getQuantityDays() - dayOfLeaving;
 
-        // Получаемм список праздничных дней в текущем месяце
+        // Получаем список праздничных дней в текущем месяце
         List<Integer> currentMonthHolidays = getHolidaysNumberOfDay(currentMonth);
-        // проверяем попадает ли дни отпуска на какие-то гос праздники
+        // Проверяем, попадают ли дни отпуска на какие-то гос праздники
         for(int i = dayOfLeaving; i < currentMonth.getQuantityDays() + 1; i++){
-            //если да, увелич кол-во неучавств дней в оплате
+            //если да, увелич кол-во неучавствующих дней в оплате
             if(currentMonthHolidays.contains(i)){
                 notTakenIntoAccountDays++;
             }
         }
 
-        // Если количество дней отпуска больше чем дней до конца месяца
-        // тогда надо получить информацию о след месяце
+        // Если количество дней отпуска больше, чем дней до конца месяца,
+        // тогда надо получить информацию о следующем месяце
         if(amountVacationDays > daysUntilEndMonth){
-            // количество дней которое осталось у сотрудника в след месяце
+            // количество дней, которое осталось у сотрудника в следующем месяце
             int weekendsLeftInNextMonth = amountVacationDays - daysUntilEndMonth;
 
             notTakenIntoAccountDays += getNotTakenIntoAccountDaysNextMonth(
@@ -65,16 +67,20 @@ public class VacationPayCalculationService {
         return ((avgSalary/AVERAGE_DAYS_IN_MONTH)  * (amountVacationDays - notTakenIntoAccountDays)) - tax;
     }
 
+    // Получаем номера праздничных дней, парсим их к int, т к в бд они хранятся в виде строки: "23,24,..."
     private List<Integer> getHolidaysNumberOfDay(MonthModel monthModel){
         return Arrays.stream(monthModel.getHolidays().split(","))
                 .map(Integer::parseInt)
                 .collect(Collectors.toList());
     }
 
+    // Получаем объект из бд
     private MonthModel getMonthInfo(int monthOfLeaving){
         return vacationPayCalculationRepository.getInfoAboutMonthLeaving(monthOfLeaving);
     }
 
+    // Данный метолд вернёт кол-во дней неучаствующих в оплате отпуска, но он учитывает праздники
+    // следующего месяца
     private int getNotTakenIntoAccountDaysNextMonth(MonthModel currentMonth, int monthOfLeaving,
                                                     int weekendsLeftInNextMonth) {
         int notTakenIntoAccountDays = 0;
@@ -82,7 +88,7 @@ public class VacationPayCalculationService {
         // а затем получаем информацию об этом месяце
         int nextMonthNumber = ++monthOfLeaving;
 
-        //Проверка, если сотрудник ушёл в конце декабря след номер месяца получ из бд должен
+        //Проверка, если сотрудник ушёл в конце декабря, следующий номер месяца полученный из бд должен
         // быть не 13 (такого не сущ), а 1
         if(currentMonth.getNumberOfMonth() == 12){
             nextMonthNumber = 1;
@@ -90,10 +96,10 @@ public class VacationPayCalculationService {
 
         MonthModel nextMonth = getMonthInfo(nextMonthNumber);
 
-        // получаем список праздничных дней след месяца
+        // получаем список праздничных дней следующего месяца
         List<Integer> nextMonthHolidays = getHolidaysNumberOfDay(nextMonth);
 
-        //Проводим проверку впопадает ли какой-то день отпуска на гос праздник
+        //Проводим проверку попадает ли какой-то день отпуска на гос праздник
         for(int a = 1; a < weekendsLeftInNextMonth + 1; a++ ){
             if(nextMonthHolidays.contains(a)){
                 //если да, увелич кол-во неучавств дней в оплате

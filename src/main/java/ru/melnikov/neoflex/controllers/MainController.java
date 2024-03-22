@@ -1,14 +1,11 @@
 package ru.melnikov.neoflex.controllers;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 import ru.melnikov.neoflex.services.VacationPayCalculationService;
 
-@Controller
+@RestController
 public class MainController {
 
     private final VacationPayCalculationService vacationPayCalculationService;
@@ -18,25 +15,23 @@ public class MainController {
         this.vacationPayCalculationService = vacationPayCalculationService;
     }
 
-    @GetMapping("/calculacte/{salary}/{vacationDays}")
-    public String getVacationPayAmount(Model model, @PathVariable(name = "salary") int salary,
-                                       @PathVariable(name = "vacationDays") int vacationDays) {
+    @GetMapping("/calculate")
+    public ResponseEntity<String> getVacationPayAmount(@RequestParam(name = "salary") int salary,
+                                               @RequestParam(name = "vacationDays") int vacationDays){
 
         int vacationPayAmount = vacationPayCalculationService.getVacationPayAmount(salary,vacationDays);
-        model.addAttribute("amountOfMoney", vacationPayAmount);
-        return "view";
+
+        return ResponseEntity.ok("Vacation pay: " + vacationPayAmount);
     }
 
-    // Решил добавить в запрос параметры для уточнения вводимой информации
-    @GetMapping("/accurateCalculacte/{salary}/{vacationDays}")
-    public String getVacationPayAmountIncludingHolidays(Model model, @PathVariable(name = "salary") int salary,
-                                                        @PathVariable(name = "vacationDays") int vacationDays,
+    @GetMapping("/accurateCalculate")
+    public ResponseEntity<String> getVacationPayAmountIncludingHolidays(@RequestParam(name = "salary") int salary,
+                                                        @RequestParam(name = "vacationDays") int vacationDays,
                                                         @RequestParam(name = "dayOfLeaving" ) int dayOfLeaving,
                                                         @RequestParam(name = "monthOfLeaving") int monthOfLeaving) {
         int vacationPayAmount = vacationPayCalculationService
                 .getVacationPayAmountIncludingHolidays(salary,vacationDays, dayOfLeaving, monthOfLeaving);
-        model.addAttribute("amountOfMoneyExactCalc", vacationPayAmount);
-        return "view";
-    }
 
+        return ResponseEntity.ok("Vacation pay: " + vacationPayAmount);
+    }
 }
